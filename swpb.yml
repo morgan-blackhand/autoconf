@@ -1,0 +1,11 @@
+# create_users_exos.yml
+
+---
+- name: Create local admin user on EXOS switches
+  hosts: switches
+  gather_facts: no
+  tasks:
+    - name: Add Local-Admin user
+      exos_config:
+        lines:
+          - create account admin Local-Admin WGU123
