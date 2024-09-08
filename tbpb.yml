@@ -1,0 +1,22 @@
+# create_users_linux.yml
+
+---
+- name: Create local admin users on Linux test boxes
+  hosts: linux_test_boxes
+  become: true
+  tasks:
+    - name: Create TestUser1 on Test_Box_1
+      ansible.builtin.user:
+        name: TestUser1
+        password: "{{ 'WGU123' | password_hash('sha512') }}"
+        state: present
+        groups: "sudo"
+      when: ansible_host == "10.10.1.56"
+
+    - name: Create TestUser2 on Test_Box_2
+      ansible.builtin.user:
+        name: TestUser2
+        password: "{{ 'WGU123' | password_hash('sha512') }}"
+        state: present
+        groups: "sudo"
+      when: ansible_host == "10.10.1.57"
