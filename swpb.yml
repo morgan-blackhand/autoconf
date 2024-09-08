@@ -8,4 +8,4 @@
     - name: Add Local-Admin user
       exos_config:
         lines:
-          - create account admin Local-Admin WGU123
+          - create account admin User1 Password
