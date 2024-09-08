@@ -5,11 +5,11 @@ all:
     # Combined switches group
     switches:
       hosts:
-        10.10.1.31:  # MGMT_Network
-        10.10.1.22:  # User_Network
-        10.10.1.32:  # ACCT_Network
-        10.10.1.30:  # IT_Network
-        10.10.1.24:  # Local_switch
+        10.10.1.100:  # MGMT_switch
+        10.10.1.101:  # User_switch
+        10.10.1.102:  # ACCT_switch
+        10.10.1.103:  # IT_seitch
+        10.10.1.104:  # Local_switch
       vars:
         ansible_user: admin
         ansible_password: ""  # No password required
@@ -19,10 +19,10 @@ all:
     # Windows desktops grouped by network role
     windows_desktops:
       hosts:
-        10.10.1.35:  # WindowsDesktop-1
-        10.10.1.36:  # WindowsDesktop-2
-        10.10.1.37:  # WindowsDesktop-3
-        10.10.1.38:  # WindowsDesktop-4
+        10.10.1.105:  # WindowsDesktop-1
+        10.10.1.106:  # WindowsDesktop-2
+        10.10.1.107:  # WindowsDesktop-3
+        10.10.1.108:  # WindowsDesktop-4
       vars:
         ansible_user: Administrator
         ansible_password: P@ssw0rd
@@ -32,8 +32,8 @@ all:
     # Linux test boxes
     linux_test_boxes:
       hosts:
-        10.10.1.56:  # Test_Box_1
-        10.10.1.57:  # Test_Box_2
+        10.10.1.109:  # Test_Box_1
+        10.10.1.110:  # Test_Box_2
       vars:
         ansible_user: student
         ansible_password: P@ssw0rd
