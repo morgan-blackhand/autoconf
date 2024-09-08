@@ -1,0 +1,43 @@
+# inventory.yml
+
+all:
+  children:
+    # Combined switches group
+    switches:
+      hosts:
+        10.10.1.31:  # MGMT_Network
+        10.10.1.22:  # User_Network
+        10.10.1.32:  # ACCT_Network
+        10.10.1.30:  # IT_Network
+        10.10.1.24:  # Local_switch
+      vars:
+        ansible_user: admin
+        ansible_password: ""  # No password required
+        ansible_connection: ansible.netcommon.network_cli
+        ansible_network_os: exos
+
+    # Windows desktops grouped by network role
+    windows_desktops:
+      hosts:
+        10.10.1.35:  # WindowsDesktop-1
+        10.10.1.36:  # WindowsDesktop-2
+        10.10.1.37:  # WindowsDesktop-3
+        10.10.1.38:  # WindowsDesktop-4
+      vars:
+        ansible_user: Administrator
+        ansible_password: P@ssw0rd
+        ansible_connection: winrm
+        ansible_port: 5985
+
+    # Linux test boxes
+    linux_test_boxes:
+      hosts:
+        10.10.1.56:  # Test_Box_1
+        10.10.1.57:  # Test_Box_2
+      vars:
+        ansible_user: student
+        ansible_password: P@ssw0rd
+        ansible_become: true
+        ansible_become_method: sudo
+        ansible_become_password: P@ssw0rd
+
