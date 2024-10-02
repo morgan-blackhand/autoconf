@@ -1,0 +1,32 @@
+from tqdm import tqdm
+
+def main():
+    print("Enter your data line by line (type 'q' or 'quit' to finish):\n")
+    input_lines = []
+    while True:
+        line = input()
+        if line.lower() in ['q', 'quit']:
+            break
+        input_lines.append(line)
+    
+    total_lines = len(input_lines)
+    output_lines = []
+    
+    print("\nProcessing data...\n")
+    # Process each line with a progress bar
+    for line in tqdm(input_lines, total=total_lines, desc="Processing", unit="line"):
+        line = line.strip()
+        if not line:
+            continue
+        fields = [field.strip() for field in line.split(':')]
+        output_line = '\t'.join(fields)
+        output_lines.append(output_line)
+    
+    print("\nProcessing complete.\n")
+    print("Transformed Data (copy and paste into your spreadsheet):\n")
+    
+    for line in output_lines:
+        print(line)
+
+if __name__ == "__main__":
+    main()
