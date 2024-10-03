@@ -1,32 +1,198 @@
-from tqdm import tqdm
+import csv
+import os
+import sys
+# this requires user input
+def clear_screen():
+    """Clears the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+def prompt_input(prompt_text, required=True, validation_func=None, error_message="Invalid input."):
+    """
+    Prompts the user for input with optional validation.
+
+    :param prompt_text: The message displayed to the user.
+    :param required: If True, the input cannot be empty.
+    :param validation_func: A function to validate the input.
+    :param error_message: The message displayed if validation fails.
+    :return: The validated user input.
+    """
+    while True:
+        user_input = input(prompt_text).strip()
+        if required and not user_input:
+            print("This field is required. Please enter a value.")
+            continue
+        if validation_func:
+            if validation_func(user_input):
+                return user_input
+            else:
+                print(error_message)
+        else:
+            return user_input
+
+def validate_ip(ip):
+    """Validates an IPv4 address."""
+    parts = ip.split('.')
+    if len(parts) != 4:
+        return False
+    for part in parts:
+        if not part.isdigit():
+            return False
+        num = int(part)
+        if num < 0 or num > 255:
+            return False
+    return True
+
+def get_device_role():
+    """Returns a list of predefined device roles or allows the user to input a custom one."""
+    predefined_roles = ["Voice Equipment", "Data Equipment", "Firewall", "Router", "Switch"]
+    print("\nSelect Device Role:")
+    for idx, role in enumerate(predefined_roles, start=1):
+        print(f"{idx}. {role}")
+    print(f"{len(predefined_roles)+1}. Other (Enter custom role)")
+    while True:
+        choice = input("Enter the number corresponding to the device role: ").strip()
+        if choice.isdigit():
+            choice = int(choice)
+            if 1 <= choice <= len(predefined_roles):
+                return predefined_roles[choice-1]
+            elif choice == len(predefined_roles)+1:
+                custom_role = prompt_input("Enter custom device role: ")
+                return custom_role
+        print("Invalid choice. Please select a valid option.")
+
+def collect_entry():
+    """Collects data for a single entry."""
+    print("\n--- Enter Customer Technical Documentation ---\n")
+    customer_name = prompt_input("Customer Name: ")
+    account_number = prompt_input("Account Number: ", validation_func=lambda x: x.isdigit(), error_message="Account Number must be numeric.")
+    service_type = prompt_input("Service Type (VOICE/DATA/OTHER): ",
+                                validation_func=lambda x: x.upper() in ["VOICE", "DATA", "OTHER"],
+                                error_message="Service Type must be VOICE, DATA, or OTHER.").upper()
+
+    print("\n--- Tickets/Work Orders ---")
+    transport_ticket = prompt_input("Transport Ticket Number: ", required=False)
+    voice_ticket = prompt_input("Voice Ticket Number: ", required=False)
+
+    status = prompt_input("Status (Active/Inactive): ",
+                          validation_func=lambda x: x.capitalize() in ["Active", "Inactive"],
+                          error_message="Status must be Active or Inactive.").capitalize()
+
+    print("\n--- Voice Services Details ---")
+    equipment_type = prompt_input("Voice Equipment Type (e.g., CISCO ATA200): ")
+    modem_type = prompt_input("Modem Type (e.g., Arris CM60000): ")
+    installation_address = prompt_input("Installation Address: ")
+    mac_address = prompt_input("MAC Address (e.g., C0E042C00000): ")
+    ip_mac_binding = prompt_input("IP MAC Binding (e.g., 10.10.13.10): ",
+                                  validation_func=validate_ip,
+                                  error_message="Please enter a valid IPv4 address.")
+
+    asset_tag = prompt_input("Asset Tag: ", required=False)
+
+    print("\n--- Voice Equipment Info ---")
+    voice_equipment_info = prompt_input("Voice Equipment Info (e.g., ATA200): ", required=False)
+
+    entry = {
+        "Customer Name": customer_name,
+        "Account Number": account_number,
+        "Service Type": service_type,
+        "Transport Ticket": transport_ticket,
+        "Voice Ticket": voice_ticket,
+        "Status": status,
+        "Equipment Type": equipment_type,
+        "Modem Type": modem_type,
+        "Installation Address": installation_address,
+        "MAC Address": mac_address,
+        "IP Address": f"{ip_mac_binding}/24",  # Adjust subnet as needed
+        "Tags": asset_tag,
+        "Custom Field: Account Number": account_number,
+        "Custom Field: Service Type": service_type,
+        "Custom Field: Transport Ticket": transport_ticket,
+        "Custom Field: Voice Ticket": voice_ticket,
+        "Custom Field: Installation Address": installation_address
+    }
+
+    # Device Role can be considered as a separate field or mapped to a CSV column
+    device_role = get_device_role()
+    entry["Device Role"] = device_role
+
+    return entry
 
 def main():
-    print("Enter your data line by line (type 'q' or 'quit' to finish):\n")
-    input_lines = []
+    clear_screen()
+    print("=== NetBox CSV Generator ===\n")
+
+    # Define CSV Headers based on NetBox's Device Import Requirements
+    csv_headers = [
+        "Name",
+        "Device Type",
+        "Device Role",
+        "Site",
+        "Manufacturer",
+        "Status",
+        "Serial",
+        "MAC Address",
+        "IP Address",
+        "Tags",
+        "Custom Field: Account Number",
+        "Custom Field: Service Type",
+        "Custom Field: Transport Ticket",
+        "Custom Field: Voice Ticket",
+        "Custom Field: Installation Address"
+    ]
+
+    entries = []
+
     while True:
-        line = input()
-        if line.lower() in ['q', 'quit']:
+        entry_data = collect_entry()
+
+        # Map entry data to CSV row
+        csv_row = {
+            "Name": f"{entry_data['Customer Name']} - Voice Device",
+            "Device Type": entry_data["Equipment Type"],
+            "Device Role": entry_data["Device Role"],
+            "Site": entry_data["Installation Address"],
+            "Manufacturer": "CISCO" if "CISCO" in entry_data["Equipment Type"].upper() else "Unknown",
+            "Status": entry_data["Status"],
+            "Serial": entry_data["Tags"],
+            "MAC Address": entry_data["MAC Address"],
+            "IP Address": entry_data["IP Address"],
+            "Tags": entry_data["Tags"],
+            "Custom Field: Account Number": entry_data["Custom Field: Account Number"],
+            "Custom Field: Service Type": entry_data["Custom Field: Service Type"],
+            "Custom Field: Transport Ticket": entry_data["Custom Field: Transport Ticket"],
+            "Custom Field: Voice Ticket": entry_data["Custom Field: Voice Ticket"],
+            "Custom Field: Installation Address": entry_data["Custom Field: Installation Address"]
+        }
+
+        entries.append(csv_row)
+        print("\nEntry added successfully!\n")
+
+        # Ask if the user wants to add another entry
+        another = input("Do you want to add another entry? (y/n): ").strip().lower()
+        if another != 'y':
             break
-        input_lines.append(line)
-    
-    total_lines = len(input_lines)
-    output_lines = []
-    
-    print("\nProcessing data...\n")
-    # Process each line with a progress bar
-    for line in tqdm(input_lines, total=total_lines, desc="Processing", unit="line"):
-        line = line.strip()
-        if not line:
-            continue
-        fields = [field.strip() for field in line.split(':')]
-        output_line = '\t'.join(fields)
-        output_lines.append(output_line)
-    
-    print("\nProcessing complete.\n")
-    print("Transformed Data (copy and paste into your spreadsheet):\n")
-    
-    for line in output_lines:
-        print(line)
+        clear_screen()
+
+    # Define output CSV filename
+    output_filename = "netbox_import.csv"
+
+    # Check if the file already exists
+    if os.path.isfile(output_filename):
+        overwrite = input(f"\nFile '{output_filename}' already exists. Overwrite? (y/n): ").strip().lower()
+        if overwrite != 'y':
+            print("Operation cancelled. Exiting.")
+            sys.exit(0)
+
+    # Write entries to CSV
+    try:
+        with open(output_filename, mode='w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
+            writer.writeheader()
+            for row in entries:
+                writer.writerow(row)
+        print(f"\nCSV file '{output_filename}' has been created successfully with {len(entries)} entries.")
+    except Exception as e:
+        print(f"An error occurred while writing to CSV: {e}")
 
 if __name__ == "__main__":
     main()
